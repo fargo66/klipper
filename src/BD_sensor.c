@@ -318,7 +318,7 @@ command_I2C_BD_receive2(uint32_t *args)
 {
 	uint8_t oid = args[0];
 	uint8_t data[8];
-	 uint32_t BD_z=BD_Data;
+	uint32_t BD_z=BD_Data;
 	memset(data,0,8);
 	
 	uint32_t len=0,j=0; 
