@@ -17,13 +17,13 @@ struct endstop {
     uint32_t rest_time, sample_time, nextwake;
     struct trsync *ts;
     uint8_t flags, sample_count, trigger_count, trigger_reason;
-	uint8_t type;
+	uint8_t type;// mark for bed distance sensor
 };
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
 
 static uint_fast8_t endstop_oversample_event(struct timer *t);
-
+//mark for bed distance sensor
 uint8_t read_endstop_pin(struct endstop *e)
 {
 	uint8_t state_e=0;

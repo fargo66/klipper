@@ -32,63 +32,6 @@ def resolve_bus_name(mcu, param, bus):
             pin_resolver.reserve_pin(pin, bus)
     return bus
     
-######################################################################
-# I2C BD_SENSOR
-######################################################################
-
-# Helper code for working with devices connected to an MCU via an i2c software bus
-
-class MCU_I2C_BD:
-    def __init__(self,mcu,   sda_pin,scl_pin, delay_t):
-        
-        self.mcu = mcu
-     
-        # Config  
-        self.oid = self.mcu.create_oid()
-
-        # Generate I2C bus config message
-
-        self.config_fmt = (
-            "config_I2C_BD oid=%d sda_pin=%s scl_pin=%s delay=%s" % (self.oid, sda_pin,scl_pin, delay_t))
-        
-        self.cmd_queue = mcu.alloc_command_queue()
-        mcu.register_config_callback(self.build_config)
-        self.I2C_BD_send_cmd = self.I2C_BD_receive_cmd = None
-      
-    def build_config(self):      
-        self.mcu.add_config_cmd(self.config_fmt)
-        self.I2C_BD_send_cmd = self.mcu.lookup_command(
-            "I2C_BD_send oid=%c data=%*s", cq=self.cmd_queue)
-        self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
-            "I2C_BD_receive oid=%c data=%*s",
-            "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)   
-    def get_oid(self):
-        return self.oid       
-    def get_mcu(self):
-        return self.mcu
-    def get_command_queue(self):
-        return self.cmd_queue    
-    def I2C_BD_send(self, data):
-      #  if self.I2C_BD_send_cmd is None:
-            # Send setup message via mcu initialization
-       #     data_msg = "".join(["%02x" % (x,) for x in data])
-       #     self.mcu.add_config_cmd("I2C_BD_send oid=%d data0=%u data1=%u" % (self.oid, data[0],data[1]), is_init=True)
-       #     print ("I2C_BD_send oid=%d data0=%u data1=%u" % (self.oid, data[0],data[1]))
-       #     return
-        print ("I2C_BD_send0 oid=%c %s " % (self.oid,data))    
-        self.I2C_BD_send_cmd.send([self.oid, data])
-    def I2C_BD_receive(self,  data):
-        return self.I2C_BD_receive_cmd.send([self.oid, data])
-       # return self.I2C_BD_receive_cmd.send([self.oid, data],minclock=minclock, reqclock=reqclock)
-       
-# Helper to setup an spi bus from settings in a config section
-def MCU_BD_I2C_from_config(mcu,config):
-    # Determine pin from config
-    ppins = config.get_printer().lookup_object("pins")
-  
-    
-    # Create MCU_SPI object
-    return MCU_I2C_BD(mcu,config.get('sda_pin'),config.get('scl_pin'),config.get('delay'))
 
 ######################################################################
 # SPI

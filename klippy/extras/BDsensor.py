@@ -43,6 +43,65 @@ def calc_move_time(dist, speed, accel):
     cruise_t = (dist - accel_decel_d) / speed
     return axis_r, accel_t, cruise_t, speed
 
+######################################################################
+# I2C BD_SENSOR
+######################################################################
+
+# Helper code for working with devices connected to an MCU via an i2c software bus
+
+class MCU_I2C_BD:
+    def __init__(self,mcu,   sda_pin,scl_pin, delay_t):
+        
+        self.mcu = mcu
+     
+        # Config  
+        self.oid = self.mcu.create_oid()
+
+        # Generate I2C bus config message
+
+        self.config_fmt = (
+            "config_I2C_BD oid=%d sda_pin=%s scl_pin=%s delay=%s" % (self.oid, sda_pin,scl_pin, delay_t))
+        
+        self.cmd_queue = mcu.alloc_command_queue()
+        mcu.register_config_callback(self.build_config)
+        self.I2C_BD_send_cmd = self.I2C_BD_receive_cmd = None
+      
+    def build_config(self):      
+        self.mcu.add_config_cmd(self.config_fmt)
+        self.I2C_BD_send_cmd = self.mcu.lookup_command(
+            "I2C_BD_send oid=%c data=%*s", cq=self.cmd_queue)
+        self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
+            "I2C_BD_receive oid=%c data=%*s",
+            "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)   
+    def get_oid(self):
+        return self.oid       
+    def get_mcu(self):
+        return self.mcu
+    def get_command_queue(self):
+        return self.cmd_queue    
+    def I2C_BD_send(self, data):
+      #  if self.I2C_BD_send_cmd is None:
+            # Send setup message via mcu initialization
+       #     data_msg = "".join(["%02x" % (x,) for x in data])
+       #     self.mcu.add_config_cmd("I2C_BD_send oid=%d data0=%u data1=%u" % (self.oid, data[0],data[1]), is_init=True)
+       #     print ("I2C_BD_send oid=%d data0=%u data1=%u" % (self.oid, data[0],data[1]))
+       #     return
+        print ("I2C_BD_send0 oid=%c %s " % (self.oid,data))    
+        self.I2C_BD_send_cmd.send([self.oid, data])
+    def I2C_BD_receive(self,  data):
+        return self.I2C_BD_receive_cmd.send([self.oid, data])
+       # return self.I2C_BD_receive_cmd.send([self.oid, data],minclock=minclock, reqclock=reqclock)
+
+
+       
+# Helper to setup an spi bus from settings in a config section
+def MCU_BD_I2C_from_config(mcu,config):
+    # Determine pin from config
+    ppins = config.get_printer().lookup_object("pins")
+  
+    
+    # Create MCU_SPI object
+    return MCU_I2C_BD(mcu,config.get('sda_pin'),config.get('scl_pin'),config.get('delay'))
 
 # BDsensor wrapper that enables probe specific features
 class BDsensorEndstopWrapper:
@@ -58,7 +117,7 @@ class BDsensorEndstopWrapper:
             config, 'deactivate_gcode', '')
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
-        pin = config.get('sensor_pin')
+        pin = config.get('sda_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         self.mcu = pin_params['chip']
         pin_params['pullup']=2
@@ -76,7 +135,7 @@ class BDsensorEndstopWrapper:
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
 
-        self.bd_sensor=bus.MCU_BD_I2C_from_config(self.mcu,config) 
+        self.bd_sensor=MCU_BD_I2C_from_config(self.mcu,config) 
         self.distance=5;
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
@@ -181,6 +240,10 @@ class BDsensorEndstopWrapper:
                 pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
               #  print"params:%s" % pr['response']
                 intd=int(pr['response'])
+                if intd>127:
+                    intd=127
+                if intd<0x20:
+                    intd=0x20
                 x.append(intd)
                 toolhead.dwell(0.3)
                 ncount1=ncount1+1

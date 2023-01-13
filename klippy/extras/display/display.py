@@ -71,7 +71,7 @@ class DisplayGroup:
 
 
         ppins = printer.lookup_object('pins')
-        pin = config.get('ser_pin')
+        pin = config.get('sclk_pin')
         pin_params = ppins.lookup_pin(pin)
         self.mcu = pin_params['chip']
         self.oid = self.mcu.create_oid()
