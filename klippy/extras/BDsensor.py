@@ -6,6 +6,7 @@ import logging
 from . import probe
 from . import bus
 import chelper
+import mcu
 
 #GPIO Basic initialization
 GPIO.setmode(GPIO.BCM)
@@ -119,7 +120,8 @@ class BDsensorEndstopWrapper:
         ppins = self.printer.lookup_object('pins')
         pin = config.get('sda_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        self.mcu = pin_params['chip']
+      #  self.mcu = pin_params['chip']
+        self.mcu = mcu.get_printer_mcu(self.printer, 'mcu')      
         pin_params['pullup']=2
         self.mcu_endstop = self.mcu.setup_pin('endstop', pin_params)
         self.printer.register_event_handler('klippy:mcu_identify',

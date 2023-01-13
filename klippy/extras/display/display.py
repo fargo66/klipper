@@ -7,6 +7,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
 from . import hd44780, hd44780_spi, st7920, uc1701, menu
+import mcu
 
 # Normal time between each screen redraw
 REDRAW_TIME = 0.500
@@ -67,16 +68,11 @@ class DisplayGroup:
         # Load all templates and store sorted by display position
         configs_by_name = {c.get_name(): c for c in data_configs}
         printer = config.get_printer()
-        print"printer:%s    %s" % (printer,config)
 
-
-        ppins = printer.lookup_object('pins')
-        pin = config.get('sclk_pin')
-        pin_params = ppins.lookup_pin(pin)
-        self.mcu = pin_params['chip']
+        # bed distance sensor,mark
+        self.mcu = mcu.get_printer_mcu(printer, 'mcu')        
         self.oid = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
-        
         self.mcu.register_config_callback(self.build_config)
         print"mcu:%s" % self.mcu
         self.I2C_BD_receive_cmd = None
