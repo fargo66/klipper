@@ -34,7 +34,6 @@ class ManualStepper:
         gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                    stepper_name, self.cmd_MANUAL_STEPPER,
                                    desc=self.cmd_MANUAL_STEPPER_help)
-        print"ManualStepper"                           
     def sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
@@ -45,15 +44,12 @@ class ManualStepper:
     def do_enable(self, enable):
         self.sync_print_time()
         stepper_enable = self.printer.lookup_object('stepper_enable')
-       
         if enable:
             for s in self.steppers:
                 se = stepper_enable.lookup_enable(s.get_name())
-                print"do_enable %s"% s.get_name()
                 se.motor_enable(self.next_cmd_time)
         else:
             for s in self.steppers:
-                print"do_enable2 %s"% s.get_name()
                 se = stepper_enable.lookup_enable(s.get_name())
                 se.motor_disable(self.next_cmd_time)
         self.sync_print_time()

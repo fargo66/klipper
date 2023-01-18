@@ -31,11 +31,16 @@ enum {
 };
 
 static struct task_wake bdsensor_wake;
-uint32_t BD_Data=0;
+uint16_t BD_Data=0;
+uint16_t BD_read_flag=1018,BD_read_lock=0;
+uint16_t BD_i2c_read(void);
 
 
-uint32_t Get_Distane_data()
+uint16_t Get_Distane_data(void)
 {
+	//BD_read_flag=0;
+	//BD_Data=BD_i2c_read();
+	BD_read_flag=1018;
 	return BD_Data;
 
 }
@@ -136,8 +141,8 @@ unsigned short BD_Check_OddEven(unsigned short byte)
 
 void BD_I2C_start(void)
 {
-	sda_gpio=gpio_out_setup(sda_pin, 0);
-	scl_gpio=gpio_out_setup(scl_pin, 0);
+	sda_gpio=gpio_out_setup(sda_pin, 1);
+	scl_gpio=gpio_out_setup(scl_pin, 1);
 
 	BD_setHigh(scl_gpio);
 	BD_setHigh(sda_gpio);
@@ -150,10 +155,10 @@ void BD_I2C_start(void)
 }
 void  BD_i2c_stop(void) {
   ndelay_bd(delay_m);
-  sda_gpio=gpio_out_setup(sda_pin, 0);
+  sda_gpio=gpio_out_setup(sda_pin, 1);
   BD_setLow(sda_gpio);
   ndelay_bd(delay_m);
-  scl_gpio=gpio_out_setup(scl_pin, 0);
+  scl_gpio=gpio_out_setup(scl_pin, 1);
   BD_setHigh(scl_gpio);
   ndelay_bd(delay_m);
 
@@ -161,9 +166,15 @@ void  BD_i2c_stop(void) {
   ndelay_bd(delay_m);
 }
 
-unsigned short BD_i2c_read(void)
+
+
+uint16_t BD_i2c_read(void)
 {
-   
+	uint16_t b = 1024;
+
+ // if(BD_read_lock==1) 
+ // 	return b;
+  BD_read_lock=1;
   BD_I2C_start();
   //// read
   BD_setHigh(sda_gpio);
@@ -172,9 +183,9 @@ unsigned short BD_i2c_read(void)
   BD_setLow(scl_gpio);
   ///
   ndelay_bd(delay_m);
-  unsigned short b = 0;
+  b = 0;
   BD_setHigh(sda_gpio);
-  sda_gpio_in=gpio_in_setup(sda_pin, 0);
+  sda_gpio_in=gpio_in_setup(sda_pin, 1);
   for (unsigned char i = 0; i <= 10; i++) {
     b <<= 1;
     ndelay_bd(delay_m);
@@ -195,6 +206,7 @@ unsigned short BD_i2c_read(void)
 
   if(b>1024)
 		b=1024;
+  BD_read_lock=0;
   return b;
 
 }
@@ -267,16 +279,19 @@ uint32_t INT_to_String(uint32_t BD_z1,uint8_t*data)
 	
 }
 
+//for command
 void 
 command_I2C_BD_receive(uint32_t *args)
 {
+	if(BD_read_flag==1018)
+		return;
 	uint8_t oid = args[0];
 	uint8_t data[8];
-	 uint32_t BD_z=BD_Data;
+	uint16_t BD_z=BD_i2c_read();//BD_Data;
 	memset(data,0,8);
-	
+//	output("mcuoid=%c BD_z=%u",oid, BD_z);
 	uint32_t len=0,j=0; 
-	if(BD_z>1000)
+	if(BD_z>=1000)
 	{
 		j=BD_z/1000;
 		data[len++] = '0'+j;
@@ -285,7 +300,7 @@ command_I2C_BD_receive(uint32_t *args)
 		data[len+1]='0';
 		data[len+2]='0';
 	}
-	if(BD_z>100)
+	if(BD_z>=100)
 	{
 		j=BD_z/100;
 		data[len++] = '0'+j;
@@ -295,7 +310,7 @@ command_I2C_BD_receive(uint32_t *args)
 	}
 	else if(data[len])
 		len++;
-	if(BD_z>10)
+	if(BD_z>=10)
 	{
 		j=BD_z/10;
 		data[len++] = '0'+j;
@@ -313,16 +328,19 @@ command_I2C_BD_receive(uint32_t *args)
 
 DECL_COMMAND(command_I2C_BD_receive, "I2C_BD_receive oid=%c data=%*s");
 
+//for display
 void 
 command_I2C_BD_receive2(uint32_t *args)
 {
+	if(BD_read_flag!=1018)
+		return;
 	uint8_t oid = args[0];
 	uint8_t data[8];
-	uint32_t BD_z=BD_Data;
+	uint16_t BD_z=BD_i2c_read();//BD_Data;
 	memset(data,0,8);
 	
 	uint32_t len=0,j=0; 
-	if(BD_z>1000)
+	if(BD_z>=1000)
 	{
 		j=BD_z/1000;
 		data[len++] = '0'+j;
@@ -331,7 +349,7 @@ command_I2C_BD_receive2(uint32_t *args)
 		data[len+1]='0';
 		data[len+2]='0';
 	}
-	if(BD_z>100)
+	if(BD_z>=100)
 	{
 		j=BD_z/100;
 		data[len++] = '0'+j;
@@ -341,7 +359,7 @@ command_I2C_BD_receive2(uint32_t *args)
 	}
 	else if(data[len])
 		len++;
-	if(BD_z>10)
+	if(BD_z>=10)
 	{
 		j=BD_z/10;
 		data[len++] = '0'+j;
@@ -374,7 +392,11 @@ command_I2C_BD_send(uint32_t *args)
 	uint8_t oid = args[0];
 	
 	int addr=atoi(args[2]);
+	BD_read_flag=addr;
+	if(addr>1020)
+		return;
 	output("mcuoid=%c i2cwrite=%u",oid, addr);
+	
 	//sscanf(args[2],"%d",&addr); 
 	BD_i2c_write(addr);
 	//uint16_t BD_z = BD_i2c_read();	
@@ -463,22 +485,18 @@ DECL_COMMAND(command_config_I2C_BD,
  {
 	// if (!sched_check_wake(&bdsensor_wake))
 	//	 return;
+	
 	 uint8_t oid;
 	 struct bdsensor *ax;
-	 foreach_oid(oid, ax, command_config_I2C_BD) {
-		// uint_fast8_t flags = ax->flags;
-		// if (!(flags & AX_PENDING))
-			// continue;
-		 //if (flags & AX_HAVE_START)
-			// bdsensor_start(ax, oid);
-		 //output("mcuoid=%c bdsensortask", oid);
-	 }
+	 if(BD_read_flag!=1018)
+		return;
+
 	if(sda_pin==0||scl_pin==0)
 		return;
-	uint32_t tm=BD_i2c_read();
+	uint16_t tm=BD_i2c_read();
 	if(tm<1024)
 		BD_Data=tm;
-	//output("mcuoid=%c bdsensortask", oid);
+//output("mcuoid=%c tmd=%u", oid,tm);
  }
  DECL_TASK(bd_sensor_task);
 

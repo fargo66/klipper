@@ -82,9 +82,11 @@ class PrinterProbe:
                                     desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
         
     def build_config(self):      
-         self.I2C_BD_receive_cmd3 = self.mcu.lookup_query_command(
-             "I2C_BD_receive oid=%c data=%*s",
-             "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)                
+        self.I2C_BD_send_cmd3 = self.mcu.lookup_command(
+            "I2C_BD_send oid=%c data=%*s", cq=self.cmd_queue)
+        self.I2C_BD_receive_cmd3 = self.mcu.lookup_query_command(
+            "I2C_BD_receive oid=%c data=%*s",
+            "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)                
                                     
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
@@ -133,6 +135,8 @@ class PrinterProbe:
         pos = toolhead.get_position()
         pos[2] = self.z_position
         pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
+        
+        
       #  print"params:%s" % pr['response']
         intd=int(pr['response'])
         strd=str(intd/100.0)      
@@ -168,19 +172,20 @@ class PrinterProbe:
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
         lift_speed = self.get_lift_speed(gcmd)
         sample_count = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
-        sample_retract_dist =0# gcmd.get_float("SAMPLE_RETRACT_DIST",
-                                          #   self.sample_retract_dist, above=0.)
-        samples_tolerance =0# gcmd.get_float("SAMPLES_TOLERANCE",
-                                         #  self.samples_tolerance, minval=0.)
+        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
+                                             self.sample_retract_dist, above=0.)
+        samples_tolerance = gcmd.get_float("SAMPLES_TOLERANCE",
+                                           self.samples_tolerance, minval=0.)
         samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
                                        self.samples_retries, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
         must_notify_multi_probe = not self.multi_probe_pending
+        
         if must_notify_multi_probe:
             self.multi_probe_begin()
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
-        positions = []
+        positions = []        
         while len(positions) < sample_count:
             # Probe position
             pos = self._probe(speed)
@@ -201,6 +206,7 @@ class PrinterProbe:
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
+        
         return self._calc_mean(positions)
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
@@ -440,13 +446,18 @@ class ProbePointsHelper:
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
                              " probe's z_offset")
+       # self.horizontal_move_z=1  
+        print"horizontal_move_z:%.2f"%self.horizontal_move_z
         probe.multi_probe_begin()
+     #   self.printer.lookup_object('toolhead').dwell(3)
+        probe.I2C_BD_send_cmd3.send([probe.oid, "1021"])
         while 1:
             done = self._move_next()
             if done:
                 break
             pos = probe.run_probe(gcmd)
             self.results.append(pos)
+        probe.I2C_BD_send_cmd3.send([probe.oid, "1018"])
         probe.multi_probe_end()
     def _manual_probe_start(self):
         done = self._move_next()

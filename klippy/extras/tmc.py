@@ -220,7 +220,6 @@ class TMCCommandHelper:
         self.read_registers = self.read_translate = None
         self.toff = None
         self.mcu_phase_offset = None
-        print"TMCCommandHelper:%s"%self.stepper_name
         self.stepper = None
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",

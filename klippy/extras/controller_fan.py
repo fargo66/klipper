@@ -26,7 +26,6 @@ class ControllerFan:
         self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
         self.last_speed = 0.
-        print"ControllerFan"   
     def handle_connect(self):
         # Heater lookup
         pheaters = self.printer.lookup_object('heaters')
