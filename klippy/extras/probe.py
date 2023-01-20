@@ -450,7 +450,7 @@ class ProbePointsHelper:
         print"horizontal_move_z:%.2f"%self.horizontal_move_z
         probe.multi_probe_begin()
      #   self.printer.lookup_object('toolhead').dwell(3)
-        probe.I2C_BD_send_cmd3.send([probe.oid, "1021"])
+        probe.I2C_BD_send_cmd3.send([probe.oid, "1022"])
         while 1:
             done = self._move_next()
             if done:

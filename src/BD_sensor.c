@@ -393,16 +393,16 @@ command_I2C_BD_send(uint32_t *args)
 	
 	int addr=atoi(args[2]);
 	BD_read_flag=addr;
-	if(addr>1020)
+	if(addr>1021)
 		return;
-	output("mcuoid=%c i2cwrite=%u",oid, addr);
+	//output("mcuoid=%c i2cwrite=%u",oid, addr);
 	
 	//sscanf(args[2],"%d",&addr); 
 	BD_i2c_write(addr);
 	//uint16_t BD_z = BD_i2c_read();	
 	//output("mcuoid=%c BD_z=%u", oid,BD_z);
 	//output("mcuoid=%c scl_pin=%u delay_m=%u", oid,scl_pin,delay_m);
-	sched_wake_task(&bdsensor_wake);
+	//sched_wake_task(&bdsensor_wake);
 }
 
 DECL_COMMAND(command_I2C_BD_send, "I2C_BD_send oid=%c data=%*s");

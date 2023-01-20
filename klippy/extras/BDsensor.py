@@ -200,25 +200,37 @@ class BDsensorEndstopWrapper:
             for stepper in kin.get_steppers():
                 if stepper.is_active_axis('z'):                    
                     self.bd_sensor.I2C_BD_send("1019") #CMD_START_CALIBRATE=1019 
-                    toolhead.dwell(1) 
+                  #  toolhead.dwell(1) 
                   #  stepper = self._lookup_stepper(gcod)
                     distance = 0.5#gcmd.get_float('DISTANCE')
                     speed = 10#gcmd.get_float('VELOCITY', above=0.)
                     accel = 2000#gcmd.get_float('ACCEL', 0., minval=0.)
                     #logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f accel=%.3f",
                     #             stepper.get_name(), distance, speed, accel)
-                    print"self.distance===%d"%self.distance
-                    self._force_enable(stepper)
+                    #print"self.distance===%.3f"%self.distance
                     self.distance=0.1
+                    self._force_enable(stepper)
+                   # self.manual_move(stepper, self.distance, speed)
+                  #  self.manual_move(stepper, -self.distance, speed)
+                   # toolhead.dwell(1)
+                    toolhead.wait_moves()
                     ncount=0
+
                     while 1:
-                        #toolhead.manual_move([None, None, 0.5], speed)
-                        self.manual_move(stepper, self.distance, speed)
-                        
+                        #self.bd_sensor.I2C_BD_send(str(ncount))                        
+                        toolhead.dwell(0.5)
                         self.bd_sensor.I2C_BD_send(str(ncount))
+                        toolhead.dwell(0.5)
+                        self.bd_sensor.I2C_BD_send(str(ncount))
+                        toolhead.dwell(0.5)
+                        self._force_enable(stepper)
+                        self.manual_move(stepper, self.distance, speed)
+                        toolhead.wait_moves()
+                       # toolhead.dwell(0.5)
                         ncount=ncount+1
-                        toolhead.dwell(1)
+                        
                         if ncount>=40: 
+                            self.bd_sensor.I2C_BD_send("1021")
                             break
         if  CMD_BD == -5:                           
             self.bd_sensor.I2C_BD_send("1017")#1017 // start reading raw calibration data
@@ -229,10 +241,9 @@ class BDsensorEndstopWrapper:
                 intd=int(pr['response'])
                 strd=str(intd)
                 gcmd.respond_raw(strd)
-                toolhead.dwell(0.3)
+                toolhead.dwell(0.1)
                 ncount1=ncount1+1
                 if ncount1>=40: 
-                    self.bd_sensor.I2C_BD_send("1018")#1018   // finish reading raw calibration data  
                     break
         if  CMD_BD == -1:                           
             self.bd_sensor.I2C_BD_send("1016")#1016 // // read sensor version
@@ -254,7 +265,7 @@ class BDsensorEndstopWrapper:
                     res = ''.join(map(chr, x))
                     gcmd.respond_raw(res)
                     break
-                    
+        self.bd_sensor.I2C_BD_send("1018")#1018               
     def _handle_mcu_identify(self):
         print("_handle_mcu_identify")
         kin = self.printer.lookup_object('toolhead').get_kinematics()
