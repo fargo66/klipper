@@ -140,8 +140,9 @@ class PrinterProbe:
         
       #  print"params:%s" % pr['response']
         intd=int(pr['response'])
-        strd=str(intd/100.0)      
-        print"_probe0_x:%.3f,y:%.3f,z:%.3f"%(pos[0],pos[1],intd/100.0)
+        strd=str(intd/100.0)   
+        pos[2]=intd/100.0
+        print"_probe0_x:%.3f,y:%.3f,z:%.3f"%(pos[0],pos[1],pos[2])
         return pos[:3]
         try:        
             epos = phoming.probing_move(self.mcu_probe, pos, speed)
