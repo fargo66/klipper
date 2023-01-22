@@ -134,6 +134,7 @@ class PrinterProbe:
         phoming = self.printer.lookup_object('homing')
         pos = toolhead.get_position()
         pos[2] = self.z_position
+        toolhead.wait_moves()
         pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
         
         

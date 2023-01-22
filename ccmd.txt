@@ -1,10 +1,13 @@
 
 git clone  https://github.com/markniu/klipper.git
+chmod 777 ./klipper/scripts/*
+./klipper/scripts/install-octopi.sh
+cd ~/klipper/
+make menuconfig
 
+sudo mount 192.168.1.6:/server /media/pio/
 
-sudo mount 192.168.137.1:/server /media/pio/
-
-/home/pi/klippy-env/bin/python /media/pio/klipper-master/klippy/klippy.py /home/pi/printer.cfger20 -l /tmp/klippy.log
+/home/pi/klippy-env/bin/python /media/pio/klipper-master/klippy/klippy.py /home/pi/printer.cfg -l /tmp/klippy.log
 
 BED_MESH_CALIBRATE 
 

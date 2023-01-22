@@ -1,6 +1,6 @@
 #import libraries
 #/home/pi/klippy-env/bin/pip2 install RPi.GPIO
-import RPi.GPIO as GPIO 
+#import RPi.GPIO as GPIO 
 import time
 import logging
 from . import probe
@@ -9,8 +9,8 @@ import chelper
 import mcu
 
 #GPIO Basic initialization
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setwarnings(False)
 
 SIGNAL_PERIOD = 0.020
 MIN_CMD_TIME = 5 * SIGNAL_PERIOD
