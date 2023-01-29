@@ -265,6 +265,12 @@ class BDsensorEndstopWrapper:
                     res = ''.join(map(chr, x))
                     gcmd.respond_raw(res)
                     break
+        
+        if  CMD_BD == -2:                           
+            pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
+            intd=int(pr['response'])
+            strd=str(intd)
+            gcmd.respond_raw(strd)
         self.bd_sensor.I2C_BD_send("1018")#1018               
     def _handle_mcu_identify(self):
         print("_handle_mcu_identify")

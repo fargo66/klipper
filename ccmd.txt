@@ -5,7 +5,7 @@ chmod 777 ./klipper/scripts/*
 cd ~/klipper/
 make menuconfig
 
-sudo mount 192.168.1.6:/server /media/pio/
+sudo mount 192.168.1.10:/server /media/pio/
 
 /home/pi/klippy-env/bin/python /media/pio/klipper-master/klippy/klippy.py /home/pi/printer.cfg -l /tmp/klippy.log
 
